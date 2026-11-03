@@ -1,0 +1,150 @@
+# ============================================================
+# Smart Home Utility AI — Global Configuration
+# ============================================================
+
+app:
+  name: "Smart Home Utility AI"
+  version: "1.0.0"
+  theme: "dark"
+
+# -----------------------------------------------
+# Dataset
+# -----------------------------------------------
+dataset:
+  url: "https://archive.ics.uci.edu/ml/machine-learning-databases/00235/household_power_consumption.zip"
+  raw_dir: "data/raw"
+  cache_file: "data/raw/household_power_consumption.txt"
+  zip_file: "data/raw/household_power_consumption.zip"
+  resample_freq: "1h"  # hourly aggregation
+
+# -----------------------------------------------
+# Feature Engineering
+# -----------------------------------------------
+features:
+  target: "Global_active_power"
+  lag_hours: [1, 2, 3, 6, 12, 24, 48, 168]
+  rolling_windows: [3, 6, 24, 168]
+  sub_meters: ["Sub_metering_1", "Sub_metering_2", "Sub_metering_3"]
+  calendar: ["hour", "dayofweek", "month", "is_weekend", "quarter"]
+
+# -----------------------------------------------
+# Forecasting
+# -----------------------------------------------
+forecasting:
+  model_path: "models/lgbm_energy_model.joblib"
+  scaler_path: "models/feature_scaler.joblib"
+  feature_path: "models/feature_list.joblib"
+  horizon: 24          # hours ahead
+  test_split_days: 60  # last N days used as test
+  lgbm_params:
+    n_estimators: 500
+    learning_rate: 0.05
+    num_leaves: 63
+    max_depth: -1
+    min_child_samples: 20
+    subsample: 0.8
+    colsample_bytree: 0.8
+    reg_alpha: 0.1
+    reg_lambda: 0.1
+    random_state: 42
+    verbose: -1
+
+# -----------------------------------------------
+# Anomaly Detection
+# -----------------------------------------------
+anomaly:
+  isolation_forest:
+    contamination: 0.03
+    n_estimators: 200
+    random_state: 42
+    model_path: "models/isolation_forest.joblib"
+  residual_zscore_threshold: 2.5
+  water_leak_percentile: 95
+  water_leak_consecutive_hours: 3
+  severity_thresholds:
+    critical_zscore: 4.0
+    warning_zscore: 2.5
+
+# -----------------------------------------------
+# Bill Estimation (Indian Tariff — BESCOM slab)
+# -----------------------------------------------
+billing:
+  currency: "₹"
+  currency_code: "INR"
+  electricity_slabs:          # kWh/month → ₹/kWh
+    - { upto: 30,   rate: 3.15 }
+    - { upto: 100,  rate: 5.50 }
+    - { upto: 200,  rate: 6.30 }
+    - { upto: 500,  rate: 7.10 }
+    - { upto: 99999, rate: 8.00 }
+  fixed_charges_per_month: 50.0    # ₹/month base charge
+  water_rate_per_litre: 0.006      # ₹/litre
+
+# -----------------------------------------------
+# CO2 Estimation
+# -----------------------------------------------
+co2:
+  emission_factor_kg_per_kwh: 0.82   # India grid average
+  tree_absorption_kg_per_year: 22.0  # kg CO2/tree/year
+  car_km_per_kg_co2: 6.0             # km per kg CO2 (petrol car)
+
+# -----------------------------------------------
+# Water Generation
+# -----------------------------------------------
+water:
+  daily_mean_litres: 150.0
+  daily_std_litres: 30.0
+  peak_hours_morning: [6, 7, 8, 9]
+  peak_hours_evening: [18, 19, 20, 21]
+  leak_probability: 0.002         # probability of leak event per hour
+  leak_multiplier: 3.5            # how much above mean a leak is
+
+# -----------------------------------------------
+# UI / Dashboard
+# -----------------------------------------------
+ui:
+  sidebar_logo: "💡"
+  chart_template: "plotly_dark"
+  primary_color: "#00d4ff"
+  accent_color: "#7b5ea7"
+  background_color: "#0a0e1a"
+  card_bg: "rgba(255,255,255,0.05)"
+  success_color: "#00ff88"
+  warning_color: "#ffaa00"
+  danger_color: "#ff4444"
+  replay_speeds: [1, 2, 5, 10]
+  default_date_range_days: 30
+
+# -----------------------------------------------
+# Smart Grid Time-of-Use (ToU) Tariffs (₹/kWh)
+# -----------------------------------------------
+tou_tariff:
+  peak:
+    rate: 9.50
+    hours: [18, 19, 20, 21]
+    name: "Peak Evening Hours"
+  normal:
+    rate: 6.50
+    hours: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+    name: "Standard Daytime"
+  off_peak:
+    rate: 3.50
+    hours: [22, 23, 0, 1, 2, 3, 4, 5]
+    name: "Super Off-Peak Night"
+
+# -----------------------------------------------
+# Solar Microgrid & Battery Storage (BESS)
+# -----------------------------------------------
+solar_microgrid:
+  default_pv_kwp: 4.5           # Rooftop solar capacity in kWp
+  default_battery_kwh: 9.6      # Battery capacity in kWh
+  battery_max_discharge_kw: 3.5 # Inverter max output
+  inverter_efficiency: 0.94     # Roundtrip efficiency
+  feed_in_tariff: 4.20          # ₹/kWh exported to grid
+
+# -----------------------------------------------
+# Vision Sentinel & Occupancy
+# -----------------------------------------------
+vision:
+  waste_wattage_threshold: 400.0 # Watts running with zero occupancy
+  inactivity_timeout_minutes: 15

@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large Raw Datasets (>100MB rejected by GitHub)
+# The raw dataset is automatically downloaded on first run by src/dataset_loader.py
+data/raw/*.txt
+data/raw/*.zip
+data/raw/*.csv
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and temporary files
+*.log
+scratch/
+.system_generated/
